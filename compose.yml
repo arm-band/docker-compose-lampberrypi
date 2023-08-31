@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  lampberry:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+      args:
+        WEB_ROOT_DIRECTORY: $WEB_ROOT_DIRECTORY
+        PHPMYADMIN_ROOT_DIRECTORY: $PHPMYADMIN_ROOT_DIRECTORY
+        PHPMYADMIN_VERSION: $PHPMYADMIN_VERSION
+    labels:
+      lamp.lampberry.pi: "LAMP Server on Raspi as lampberry"
+    volumes:
+      # workspace
+      - ./workspace:/workspace
+      # docker settings template
+      - ./template:/template
+      # apache log
+      - ./apache/log:/var/log/apache2
+      # PHP ini
+      - ./php/conf/php.ini:/etc/php/${PHP_VERSION}/fpm/php.ini
+      # PHP conf
+      - ./php/conf/php-fpm.conf:/etc/php/${PHP_VERSION}/fpm/php-fpm.conf
+      # PHP error log
+      - ./php/error_log:/var/log/php
+      # SSL
+      - ./cert:/etc/ssl/private
+      # MariaDB error log
+      - ./mysql/log:/var/log/mysql
+      # sessions
+      - ./phpmyadmin/sessions:/sessions
+      # phpMyAdmin ini
+      - ./phpmyadmin/conf/phpmyadmin-misc.ini:/usr/local/etc/php/conf.d/phpmyadmin-misc.ini
+    tty: true
+    ports:
+      - "$WEB_HOST_PORTNUM:$WEB_CONTAINER_PORTNUM"
+      - "$WEB_HOST_PORTSSL:$WEB_CONTAINER_PORTSSL"
+      - "$WEB_HOST_PORTSSH:$WEB_CONTAINER_PORTSSH"
+      - "$DB_HOST_PORTNUM:$DB_CONTAINER_PORTNUM"
+      - "$PHPMYADMIN_HOST_PORTNUM:$PHPMYADMIN_CONTAINER_PORTNUM"
+    entrypoint: bash -c "bash /workspace/entrypoint.sh $WEB_ROOT_DIRECTORY $WEB_DOMAIN $WEB_HOST_PORTNUM $WEB_CONTAINER_PORTNUM $WEB_HOST_PORTSSL $WEB_CONTAINER_PORTSSL $WEB_SSH_USER $WEB_SSH_PASSWORD $PHP_VERSION $DB_CONTAINER_PORTNUM $DB_MARIADB_PASSWORD $PHPMYADMIN_ROOT_DIRECTORY $PHPMYADMIN_CONTAINER_PORTNUM $PHPMYADMIN_USER_NAME $PHPMYADMIN_USER_PASSWORD && /bin/bash"
